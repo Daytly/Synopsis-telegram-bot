@@ -5,6 +5,9 @@ from telegram.ext import Application, CallbackContext, CommandHandler, MessageHa
 from data.db import db_session
 from data.CONSTANTS import PATH_DB, BOT_TOKEN
 from data.messages.client import start_message
+from handlers.client.create_notes import conv_handler_add_note
+from handlers.client.keyboards import registry_keyboard
+from handlers.client.registration import register_handler
 from handlers.client.show_notes import show_note_handler, add_and_view_note_handler, open_notes_menu_callback_handler, \
     view_note_callback_handler
 
@@ -16,8 +19,8 @@ logging.basicConfig(
 
 async def start(update: Update, context: CallbackContext):
     user = update.effective_user
-    sent_message = start_message.format(user=user.mention_html())
-    await update.message.reply_html(sent_message)
+    sent_message = start_message.format(user.mention_html())
+    await update.message.reply_html(sent_message, reply_markup=registry_keyboard)
 
 
 
@@ -29,6 +32,8 @@ def main():
     application.add_handler(add_and_view_note_handler)
     application.add_handler(open_notes_menu_callback_handler)
     application.add_handler(view_note_callback_handler)
+    application.add_handler(register_handler)
+    application.add_handler(conv_handler_add_note)
     application.run_polling()
 
 

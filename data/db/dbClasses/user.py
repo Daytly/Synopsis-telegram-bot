@@ -11,6 +11,7 @@ class User(SqlAlchemyBase, SerializerMixin):
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     username = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     phone_number = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    is_admin = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 
     def __repr__(self):
         return f'<User> {self.id} {self.username} {self.stage}'

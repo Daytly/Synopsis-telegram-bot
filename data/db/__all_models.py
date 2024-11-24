@@ -4,3 +4,4 @@ from .dbClasses import note_file
 from .dbClasses import topic_note
 from .dbClasses import topic
 from .dbClasses import file
+from .dbClasses import assessments

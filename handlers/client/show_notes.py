@@ -1,22 +1,24 @@
 from telegram import ReplyKeyboardRemove
 from telegram import Update
-from telegram.ext import CallbackContext, ConversationHandler, CommandHandler, filters, \
-    MessageHandler, CallbackQueryHandler
+from telegram.ext import CallbackContext, ConversationHandler, CommandHandler, CallbackQueryHandler, MessageHandler, \
+    filters
 
 from data.callback_patterns import note_pattern, topic_pattern, menu_pattern
 from data.callbacks import view_topic_callback, add_note_callback, exit_note_callback, \
     left_arrow_topic_callback, right_arrow_topic_callback, back_topic_callback, topic_callback, view_note_callback, \
-    left_arrow_note_callback, right_arrow_note_callback, back_note_callback
-from data.dialog_IDs import SHOW_NOTE_CONDITION, ADD_AND_VIEW_NOTE_CALLBACK_CONDITION
+    left_arrow_note_callback, right_arrow_note_callback, back_note_callback, assessment_note_callback, \
+    assessment_note_back_callback
+from data.decorators import its_register_user
 from data.messages.client import confirming_message
-from data.messages.creator import create_topic_message
+from data.messages.creator import create_topic_message, create_note_caption, create_assessment_caption
 from data.messages.errors import error_message
 from data.send_messages import send_message, delete_message, edit_message, send_photo_group
-from handlers.client.functions import create_media_group, update_file_ids
+from handlers.client.functions import create_media_group, update_file_ids, assess_note
 from handlers.client.keyboards import create_topics_keyboard, create_menu_keyboard, create_notes_keyboard, \
-    create_note_keyboard
+    create_assessment_note_keyboard
 
 
+@its_register_user
 async def show_menu(update: Update, context: CallbackContext):
     keyboard = create_menu_keyboard()
     await send_message(update, "hi", markup=keyboard)
@@ -34,24 +36,20 @@ async def show_notes_list(update: Update, context: CallbackContext, topic_id, in
 
 
 async def show_note(update: Update, context: CallbackContext, note_id):
-    keyboard = create_note_keyboard()
+    keyboard = create_assessment_note_keyboard(update.effective_user.id, note_id)
     media_group = create_media_group(note_id, True)
+    caption = create_note_caption(note_id)
+    caption_for_asses = create_assessment_caption(note_id)
     await delete_message(update)
     if not await send_photo_group(update, media_group):
         media_group = create_media_group(note_id, False)
-        messages = await send_photo_group(update, media_group)
+        messages = await send_photo_group(update, media_group, caption)
         file_ids = []
         for message in messages:
             file_ids.append(message.photo[-1].file_id)
         update_file_ids(note_id, file_ids)
-
-
-
-async def stop(update: Update, context: CallbackContext):
-    sent_message = confirming_message
-    msg = await send_message(update, sent_message, markup=ReplyKeyboardRemove())
-    await delete_message(update, message_id=msg.message_id)
-    return ConversationHandler.END
+        if keyboard is not None:
+            await send_message(update, caption_for_asses, keyboard)
 
 
 async def emissions_handler(update: Update, context: CallbackContext):
@@ -60,6 +58,7 @@ async def emissions_handler(update: Update, context: CallbackContext):
     return ConversationHandler.END
 
 
+@its_register_user
 async def add_and_view_note_callback_query(update: Update, context: CallbackContext):
     callback = update.callback_query.data
     await update.callback_query.answer()
@@ -74,7 +73,8 @@ async def add_and_view_note_callback_query(update: Update, context: CallbackCont
         return ConversationHandler.END
 
 
-async def open_notes_menu_callback_query(update: Update, context: CallbackContext):
+@its_register_user
+async def open_topic_menu_callback_query(update: Update, context: CallbackContext):
     callback = update.callback_query.data
     await update.callback_query.answer()
     if left_arrow_topic_callback in callback:
@@ -94,6 +94,7 @@ async def open_notes_menu_callback_query(update: Update, context: CallbackContex
         return ConversationHandler.END
 
 
+@its_register_user
 async def view_note_callback_query(update: Update, context: CallbackContext):
     callback = update.callback_query.data
     await update.callback_query.answer()
@@ -116,7 +117,22 @@ async def view_note_callback_query(update: Update, context: CallbackContext):
         return ConversationHandler.END
 
 
-show_note_handler = CommandHandler("show_note", show_menu)
+@its_register_user
+async def assessments_callback_query(update: Update, context: CallbackContext):
+    callback = update.callback_query.data
+    await update.callback_query.answer()
+    if callback == assessment_note_back_callback:
+        await delete_message(update)
+    elif assessment_note_callback in callback:
+        note_id, score = map(int, callback[callback.find(assessment_note_callback) + len(assessment_note_callback):])
+        await delete_message(update)
+        return await assess_note(update.effective_user.id, note_id, score)
+    else:
+        await  send_message(update, error_message)
+        return ConversationHandler.END
+
+
+show_note_handler = CommandHandler("menu", show_menu)
 add_and_view_note_handler = CallbackQueryHandler(add_and_view_note_callback_query, menu_pattern)
-open_notes_menu_callback_handler = CallbackQueryHandler(open_notes_menu_callback_query, topic_pattern)
+open_notes_menu_callback_handler = CallbackQueryHandler(open_topic_menu_callback_query, topic_pattern)
 view_note_callback_handler = CallbackQueryHandler(view_note_callback_query, note_pattern)
