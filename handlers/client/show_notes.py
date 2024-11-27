@@ -69,7 +69,7 @@ async def add_and_view_note_callback_query(update: Update, context: CallbackCont
     elif callback == exit_note_callback:
         return await delete_message(update)
     else:
-        await  send_message(update, error_message)
+        await send_message(update, error_message)
         return ConversationHandler.END
 
 
@@ -108,7 +108,7 @@ async def view_note_callback_query(update: Update, context: CallbackContext):
         return await show_notes_list(update, context, note_id, index)
     elif callback == back_note_callback:
         await delete_message(update)
-        return await show_menu(update, context)
+        return await show_topics_list(update, context, 0)
     elif view_note_callback in callback:
         note_id = int(callback[callback.find(view_note_callback) + len(view_note_callback):])
         return await show_note(update, context, note_id)
@@ -124,7 +124,8 @@ async def assessments_callback_query(update: Update, context: CallbackContext):
     if callback == assessment_note_back_callback:
         await delete_message(update)
     elif assessment_note_callback in callback:
-        note_id, score = map(int, callback[callback.find(assessment_note_callback) + len(assessment_note_callback):].split())
+        note_id, score = map(int,
+                             callback[callback.find(assessment_note_callback) + len(assessment_note_callback):].split())
         await delete_message(update)
         return await assess_note(update.effective_user.id, note_id, score)
     else:
