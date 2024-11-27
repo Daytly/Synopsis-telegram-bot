@@ -13,7 +13,7 @@ class Note(SqlAlchemyBase, SerializerMixin):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"))
     modified_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False, default=datetime.now)
-    name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    title = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     description = sqlalchemy.Column(sqlalchemy.String)
     score = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, default=-1)
 

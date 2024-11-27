@@ -1,7 +1,9 @@
 from telegram import InputMediaPhoto
 
 from data.db.dbClasses.assessments import Assessment
+from data.db.dbClasses.file import File
 from data.db.dbClasses.note import Note
+from data.db.dbClasses.topic import Topic
 from data.db.dbClasses.user import User
 from data.db.db_session import create_session
 
@@ -20,7 +22,7 @@ def create_media_group(note_id, is_fast):
 
 def assess_note(user_id, note_id, score):
     db_sess = create_session()
-    assessment = db_sess.query(Assessment).filter(note_id=note_id, user_id=user_id).first()
+    assessment = db_sess.query(Assessment).filter_by(note_id=note_id, user_id=user_id).first()
     if assessment:
         return False
     assessment = Assessment(note_id=note_id, user_id=user_id, score=score)
@@ -52,3 +54,34 @@ def register_user(user_id, name, surname, username, phone_number):
     db_sess.commit()
     db_sess.close()
     return True
+
+
+def create_note(title, description, files, user_id, topic_id):
+    db_sess = create_session()
+    user = db_sess.query(User).get(user_id)
+    if user is None:
+        return False
+
+    topic = db_sess.query(Topic).get(topic_id)
+    if topic is None:
+        return False
+    note = Note()
+    note.title = title
+    note.description = description
+    files_obj = []
+    for file in files:
+        file = File(path=file["path"], file_id=file["file_id"])
+        db_sess.add(file)
+        files_obj.append(file)
+    db_sess.commit()
+    for file in files_obj:
+        note.files.append(file)
+    note.user = user
+    note.topics.append(topic)
+    db_sess.add(note)
+    db_sess.commit()
+    db_sess.close()
+    return True
+
+
+

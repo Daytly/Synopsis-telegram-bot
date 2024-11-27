@@ -3,7 +3,7 @@ from telegram.ext import MessageHandler, filters, CallbackContext
 
 from data.send_messages import send_message
 from handlers.client.functions import register_user
-from handlers.client.keyboards import menu_keyboard
+from keyboards.show_notes import menu_keyboard
 
 
 async def register(update: Update, context: CallbackContext):

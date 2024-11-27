@@ -11,9 +11,9 @@ def create_topic_message(topic_id):
 def create_note_caption(note_id):
     db_sess = create_session()
     note = db_sess.query(Note).get(note_id)
-    return f"{note.name}\n{note.description}"
+    return f"{note.title}\n{note.description}"
 
 def create_assessment_caption(note_id):
     db_sess = create_session()
     note = db_sess.query(Note).get(note_id)
-    return f"Оцените данный конспект: \n{note.name}"
+    return f"Оцените данный конспект: \n{note.title}"
